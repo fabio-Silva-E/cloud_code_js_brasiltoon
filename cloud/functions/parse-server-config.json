@@ -1,0 +1,7 @@
+{
+    "databaseURI": "mongodb://127.0.0.1:27017/",
+    "cloud": "cloud//main.js",
+    "appId": "yourAppId",
+    "masterKey": "yourMasterKey",
+    "serverURL": "http://localhost:1337/parse"
+}

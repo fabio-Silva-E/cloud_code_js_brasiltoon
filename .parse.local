@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "_default": {
+      "link": "brasiltoon"
+    },
+    "brasiltoon": {
+      "applicationId": "H13T1aiOUr09EFLEcNTWgpUZsVhf2b0hsogOQZim"
+    }
+  }
+}

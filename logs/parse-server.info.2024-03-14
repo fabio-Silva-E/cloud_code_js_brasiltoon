@@ -1,0 +1,7 @@
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowClientClassCreation' default will change to 'false' in a future version.","timestamp":"2024-03-14T16:58:48.133Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2024-03-14T16:58:48.210Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2024-03-14T16:58:48.283Z"}
+{"functionName":"reset-password","level":"info","message":"Ran cloud function reset-password for user undefined with:\n  Input: {\"email\":\"fs2894488@gmail.com\"}\n  Result: undefined","params":{"email":"fs2894488@gmail.com"},"timestamp":"2024-03-14T17:11:55.167Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowClientClassCreation' default will change to 'false' in a future version.","timestamp":"2024-03-14T19:36:12.598Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'allowExpiredAuthDataToken' default will change to 'false' in a future version.","timestamp":"2024-03-14T19:36:12.603Z"}
+{"level":"warn","message":"DeprecationWarning: The Parse Server option 'encodeParseObjectInCloudFunction' default will change to 'true' in a future version.","timestamp":"2024-03-14T19:36:12.605Z"}

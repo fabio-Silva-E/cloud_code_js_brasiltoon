@@ -3,5 +3,15 @@
     "cloud": "cloud//main.js",
     "appId": "yourAppId",
     "masterKey": "yourMasterKey",
-    "serverURL": "http://localhost:1337/parse"
+    "serverURL": "https://terrier-equipped-supposedly.ngrok-free.app/parse",
+    "publicServerURL": "https://terrier-equipped-supposedly.ngrok-free.app/parse",
+    "appName": "Brasiltoon",
+    "emailAdapter": {
+        "module": "parse-server-generic-email-adapter",
+        "options": {
+            "service": "Gmail",
+            "email": "fs2894488@gmail.com",
+            "password": "ujlm xzpr tken yuco"
+        }
+    }
 }

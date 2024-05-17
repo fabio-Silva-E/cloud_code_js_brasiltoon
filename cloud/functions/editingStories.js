@@ -3,68 +3,19 @@ const Product = Parse.Object.extend('Product');
 const Chapter = Parse.Object.extend('Chapter');
 const PagesChapter = Parse.Object.extend('PagesChapter');
 const CoinToUser = Parse.Object.extend('CoinToUser');
-const admin = require('firebase-admin');
-const fs = require('fs');
-const serviceAccount = require('./brasiltoon-5983e-firebase-adminsdk-3a0tz-3b8680860d.json');
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: "brasiltoon-5983e.appspot.com" // Insira o URL do seu bucket do Firebase Storage
-});
-
-// Função para salvar a imagem no diretório do aplicativo
-async function saveImageToAppDirectory(image) {
-    try {
-        // Gera um nome de arquivo único para a imagem usando timestamp
-        const uniqueFileName = Date.now().toString();
-        const imageName = `${uniqueFileName}.png`;
-
-        // Referência ao caminho no Firebase Storage
-        const bucket = admin.storage().bucket();
-        const file = bucket.file(`images/${imageName}`);
-
-        // Envia o arquivo para o Firebase Storage
-        await file.save(image/*, {
-            metadata: {
-                contentType: 'image/png'
-            }
-        }*/);
-
-        // Obtém o URL do arquivo recém-enviado
-        const imagePath = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(file.name)}?alt=media`;
-        //  const imagePath = `https://firebasestorage.googleapis.com/${bucket.name}/${file.name}`;
-
-        // Retorna o URL completo da imagem
-        console.log(imagePath);
-        return imagePath;
-    } catch (error) {
-        // Lida com erros durante o upload
-        console.error('Erro durante o upload da imagem:', error);
-        throw new Error('Erro durante o upload da imagem');
-    }
-}
-//função para publicar capa da historia
+const GalleryPage = Parse.Object.extend('GalleryPage');
+const GalleryChapter = Parse.Object.extend('GalleryChapter');
+const Gallery = Parse.Object.extend('Gallery');
 Parse.Cloud.define('publish-cape-story', async (req) => {
     if (!req.user) throw 'INVALID_USER';
 
     const category = new Parse.Object('Category');
     category.id = req.params.category;
-
-    /*  try {
-          const coinResult = await useCoin(1, req.user);
-          if (!coinResult.success) {
-              throw coinResult.message; // Lança o erro caso a atualização das moedas falhe
-          }*/
-    // Caminho local do arquivo
-    // const filePath = 'C://Users//fabio//OneDrive//Imagens//Imagens da Câmera//IMG-20231107-WA0007.jpg';
-
-    // Lê o arquivo como um buffer
-    // const imageBuffer = fs.readFileSync(filePath);
-
-    // Salva a imagem no diretório do aplicativo
-    // const imagePath = await saveImageToAppDirectory(`file:///C:/6_semestre/mangas/free/FREE%20%20CAPA-1.png`);
+    const galleryCover = new Parse.Object('Gallery');
+    galleryCover.id = req.params.cape;
     const product = new Product();
     product.set('title', req.params.title);
-    product.set('cape', req.params.cape);
+    product.set('cape', galleryCover);
     product.set('description', req.params.description);
     product.set('user', req.user);
     product.set('category', category);
@@ -74,23 +25,18 @@ Parse.Cloud.define('publish-cape-story', async (req) => {
     return {
         id: savedItem.id,
     };
-    /*  } catch (error) {
-          throw error; // Propaga qualquer erro ocorrido na verificação das moedas
-      }*/
+
 });
 //função para publicar capitulo da historia
 Parse.Cloud.define('publish-cape-chapter', async (req) => {
     if (req.user == null) throw 'INVALID_USER';
     const product = new Parse.Object('Product');
     product.id = req.params.product;
-    /*  try {
-          const coinResult = await useCoin(1, req.user);
-          if (!coinResult.success) {
-              throw coinResult.message; // Lança o erro caso a atualização das moedas falhe
-          }*/
+    const galleryChapter = new Parse.Object('GalleryChapter');
+    galleryChapter.id = req.params.cape;
     const chapter = new Chapter();
     chapter.set('namechapter', req.params.title);
-    chapter.set('capechapter', req.params.cape);
+    chapter.set('capechapter', galleryChapter);
     chapter.set('description', req.params.description);
     chapter.set('chapter', product);
     const savedItem = await chapter.save(null, { useMasterKey: true });
@@ -98,32 +44,23 @@ Parse.Cloud.define('publish-cape-chapter', async (req) => {
     return {
         id: savedItem.id,
     };
-    /*  } catch (error) {
-          throw error; // Propaga qualquer erro ocorrido na verificação das moedas
-      }*/
+
 });
 //função para publicar paginas capitulo 
 Parse.Cloud.define('publish-pages-chapter', async (req) => {
     if (req.user == null) throw 'INVALID_USER';
     const chapter = new Parse.Object('Chapter');
     chapter.id = req.params.chapter;
-
-    /* try {
-         const coinResult = await useCoin(1, req.user);
-         if (!coinResult.success) {
-             throw coinResult.message; // Lança o erro caso a atualização das moedas falhe
-         }*/
+    const galleryPage = new Parse.Object('GalleryPage');
+    galleryPage.id = req.params.page;
     const pagesChapter = new PagesChapter();
-    pagesChapter.set('page', req.params.page);
+    pagesChapter.set('page', galleryPage);
     pagesChapter.set('chapterpage', chapter);
     const savedItem = await pagesChapter.save(null, { useMasterKey: true });
 
     return {
         id: savedItem.id,
     };
-    /*} catch (error) {
-        throw error; // Propaga qualquer erro ocorrido na verificação das moedas
-    }*/
 });
 //função para editar Capa da Historia
 Parse.Cloud.define("edite-cover-story", async (req) => {
@@ -144,7 +81,7 @@ Parse.Cloud.define("edite-cover-story", async (req) => {
           if (!coinResult.success) {
               throw coinResult.message; // Lança o erro caso a atualização das moedas falhe
           }*/
-
+    //product.set('cape', req.params.cape);
     product.set('title', req.params.title);
     product.set('description', req.params.description);
     product.set('category', category);
@@ -201,69 +138,125 @@ Parse.Cloud.define("edite-pages-chapter", async (req) => {
     const pagesChapter = new PagesChapter();
     pagesChapter.id = req.params.pageId;
 
-    /* const coinResult = await useCoin(1, req.user);
-     if (!coinResult.success) {
-         throw coinResult.message; // Lança o erro caso a atualização das moedas falhe
-     }*/
-
-    return
-    //  pagesChapter.set('page', req.params.page); 
-
-
-    //   await PagesChapter.save(null, { useMasterKey: true });
-
-
+    pagesChapter.page = req.params.page;
+    return 'PAGE EDITE SUCCESS'
 });
 //função para excluir pagina do capitulo selecionado da historia 
 Parse.Cloud.define('delete-page', async (req) => {
-    if (req.params.pageId == null) throw 'INVALID-PAGE';
+    if (!req.params.pageId) throw 'INVALID-PAGE';
+    const pagesChapterId = req.params.pageId;
+    // Primeiro, obtenha o objeto PagesChapter.
     const pagesChapter = new PagesChapter();
-    pagesChapter.id = req.params.pageId;
-
-    await pagesChapter.destroy({ useMasterKey: true });
-
+    pagesChapter.id = pagesChapterId;
+    try {
+        // Carregue o objeto PagesChapter para acessar o objeto GalleryPage associado
+        const pagesChapterObject = await pagesChapter.fetch({ useMasterKey: true });
+        const galleryPage = pagesChapterObject.get('page');  // Supondo que 'page' é o campo que contém o ponteiro para GalleryPage
+        // Se houver um objeto GalleryPage associado, deletamos ele
+        if (galleryPage) {
+            await galleryPage.destroy({ useMasterKey: true });
+        }
+        // Depois de deletar o objeto GalleryPage, deletamos o PagesChapter
+        await pagesChapter.destroy({ useMasterKey: true });
+        return "Page and related gallery page deleted successfully.";
+    } catch (error) {
+        throw `Error deleting objects: ${error}`;
+    }
 });
+
 //função para excluir capitulo da historia
+// Função para excluir capítulo da história e todos os objetos relacionados
 Parse.Cloud.define('delete-chapter', async (req) => {
-    if (req.params.chapterId == null) throw 'INVALID-CHAPTER';
+    if (!req.params.chapterId) throw 'INVALID-CHAPTER';
     const chapterId = req.params.chapterId;
-    const pagesChapter = new Parse.Query("PagesChapter");
-    pagesChapter.equalTo("chapterpage", { "__type": "Pointer", "className": "Chapter", "objectId": chapterId });
-    const relatedObjects2 = await pagesChapter.find({ useMasterKey: true });
-    await Parse.Object.destroyAll(relatedObjects2, { useMasterKey: true });
+
     const chapter = new Chapter();
     chapter.id = chapterId;
-    await chapter.destroy({ useMasterKey: true });
 
+    try {
+        // Primeiro, obtemos o objeto Chapter para acessar o objeto GalleryChapter associado, se houver
+        const chapterObject = await chapter.fetch({ useMasterKey: true });
+        const galleryChapter = chapterObject.get('capechapter');
+
+        // Excluir o GalleryChapter associado, se houver
+        if (galleryChapter) {
+            await galleryChapter.destroy({ useMasterKey: true });
+        }
+
+        // Buscar todas as PagesChapter associadas ao Chapter
+        const pagesChapterQuery = new Parse.Query("PagesChapter");
+        pagesChapterQuery.equalTo("chapterpage", chapter);
+        const relatedPagesChapters = await pagesChapterQuery.find({ useMasterKey: true });
+
+        // Excluir todas as PagesChapter e os GalleryPage associados
+        for (const pagesChapter of relatedPagesChapters) {
+            const galleryPage = pagesChapter.get('page');
+            if (galleryPage) {
+                await galleryPage.destroy({ useMasterKey: true });
+            }
+            await pagesChapter.destroy({ useMasterKey: true });
+        }
+
+        // Após remover todos os objetos associados, excluir o próprio Chapter
+        await chapter.destroy({ useMasterKey: true });
+
+        return "Chapter and all related objects deleted successfully.";
+    } catch (error) {
+        throw `Error deleting objects: ${error}`;
+    }
 });
+
 //função para excluir historia
+// Função para excluir história e todos os objetos relacionados
+// Função para excluir história e todos os objetos relacionados
 Parse.Cloud.define("delete-story", async (request) => {
     const productId = request.params.productId;
 
-    // Lógica para buscar e excluir objetos vinculados em RelatedClass1
-    const chapter = new Parse.Query("Chapter");
-    chapter.equalTo("chapter", { "__type": "Pointer", "className": "Product", "objectId": productId });
-    const relatedObjects1 = await chapter.find({ useMasterKey: true });
-
-    for (const relatedObject1 of relatedObjects1) {
-        // Lógica para buscar e excluir objetos vinculados em RelatedClass2
-        const pagesChapter = new Parse.Query("PagesChapter");
-        pagesChapter.equalTo("chapterpage", { "__type": "Pointer", "className": "Chapter", "objectId": relatedObject1.id });
-        const relatedObjects2 = await pagesChapter.find({ useMasterKey: true });
-        await Parse.Object.destroyAll(relatedObjects2, { useMasterKey: true });
-
-        // Excluir objeto da RelatedClass1
-        await relatedObject1.destroy({ useMasterKey: true });
-    }
-
-    // Excluir objeto principal
-    //const MainClass = Parse.Object.extend("MainClass");
     const product = new Product();
     product.id = productId;
-    await product.destroy({ useMasterKey: true });
 
-    return "Main object and related objects deleted successfully.";
+    try {
+        // Primeiro, carregue o objeto Product para acessar a capa associada
+        const productObject = await product.fetch({ useMasterKey: true });
+        const galleryCover = productObject.get('cape');
+
+        // Excluir a capa da história, se existir
+        if (galleryCover) {
+            await galleryCover.destroy({ useMasterKey: true });
+        }
+
+        // Lógica para buscar e excluir objetos vinculados em Chapter
+        const chapterQuery = new Parse.Query("Chapter");
+        chapterQuery.equalTo("chapter", product);
+        const relatedChapters = await chapterQuery.find({ useMasterKey: true });
+
+        for (const relatedChapter of relatedChapters) {
+            // Excluir a capa do capítulo, se existir
+            const galleryChapter = relatedChapter.get('capechapter');
+            if (galleryChapter) {
+                await galleryChapter.destroy({ useMasterKey: true });
+            }
+
+            // Lógica para buscar e excluir objetos vinculados em PagesChapter
+            const pagesChapterQuery = new Parse.Query("PagesChapter");
+            pagesChapterQuery.equalTo("chapterpage", relatedChapter);
+            const relatedPagesChapters = await pagesChapterQuery.find({ useMasterKey: true });
+            await Parse.Object.destroyAll(relatedPagesChapters, { useMasterKey: true });
+
+            // Excluir objeto da Chapter
+            await relatedChapter.destroy({ useMasterKey: true });
+        }
+
+        // Excluir o objeto principal (Product)
+        await product.destroy({ useMasterKey: true });
+
+        return "Main object and all related objects including gallery covers deleted successfully.";
+    } catch (error) {
+        throw `Error deleting objects: ${error}`;
+    }
 });
+
+
 async function useCoin(coin, user) {
     if (user == null) throw 'INVALID_USER';
     //  if (req.params.quantity == null || req.params.quantity <= 0) throw 'INVALID_QUANTITY';

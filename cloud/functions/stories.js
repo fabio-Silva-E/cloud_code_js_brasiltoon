@@ -3,6 +3,9 @@ const PagesChapter = Parse.Object.extend('PagesChapter');
 const Chapter = Parse.Object.extend('Chapter');
 const FavoriteItem = Parse.Object.extend('FavoriteItem');
 const Product = Parse.Object.extend('Product');
+const Gallery = Parse.Object.extend('Gallery');
+const GalleryChapter = Parse.Object.extend('GalleryChapter');
+const GalleryPage = Parse.Object.extend('GalleryPage');
 const PageCount = Parse.Object.extend('PageCount');
 //função para buscar lista de historias
 Parse.Cloud.define('get-product-list', async (req) => {
@@ -29,6 +32,7 @@ Parse.Cloud.define('get-product-list', async (req) => {
     if (itemsPerPage > 100) throw 'quantidade invalida de itens por pagina';
     queryProducts.skip(itemsPerPage * req.params.page || 0);
     queryProducts.limit(itemsPerPage);
+    queryProducts.include('cape');
     queryProducts.include('category');
     queryProducts.include('user');
     const resultProducts = await queryProducts.find({ useMasterKey: true });
@@ -37,13 +41,34 @@ Parse.Cloud.define('get-product-list', async (req) => {
         return formatProduct(p);
     });
 });
+//função para buscar lista de Gallery
+Parse.Cloud.define('get-Gallery-list', async (req) => {
+    const queryGallery = new Parse.Query(Gallery);
+    const resultCape = await queryGallery.find({ useMasterKey: true });
+    return resultCape.map(function (c) {
+        c = c.toJSON();
+        return {
+            image: c.file.url,
+            id: c.objectId,
+        }
+    });
+});
+Parse.Cloud.define('get-Gallery-Chapter-list', async (req) => {
+    const queryGalleryChapter = new Parse.Query(GalleryChapter);
+    const resultCape = await queryGalleryChapter.find({ useMasterKey: true });
+    return resultCape.map(function (c) {
+        c = c.toJSON();
+        return {
+            image: c.file.url,
+            id: c.objectId,
+        }
+    });
+});
 //função buscar lista de favoritos
 Parse.Cloud.define('get-favorite-items', async (req) => {
     if (req.user == null) throw 'INVALID_USER';
-
     const queryFavoriteItem = new Parse.Query(FavoriteItem);
     queryFavoriteItem.equalTo('user', req.user);
-
     if (req.params.userId != null) {
         const user = new User();
         user.id = req.params.userId;
@@ -59,6 +84,9 @@ Parse.Cloud.define('get-favorite-items', async (req) => {
         productQuery.equalTo('category', category);
     }
 
+    // const gallery = new Gallery();
+    // gallery.id = 'ZBLtXLGPjI';
+    // productQuery.equalTo('cape', gallery);
     if (req.params.title != null) {
         productQuery.matches('title', new RegExp(req.params.title, 'i'));
     }
@@ -74,7 +102,7 @@ Parse.Cloud.define('get-favorite-items', async (req) => {
     queryFavoriteItem.include('product');
     queryFavoriteItem.include('product.category');
     queryFavoriteItem.include('product.user');
-
+    queryFavoriteItem.include('product.cape');
     const resultFavoriteItem = await queryFavoriteItem.find({ useMasterKey: true });
 
     return resultFavoriteItem.map(function (c) {
@@ -293,11 +321,16 @@ Parse.Cloud.define('get-pages-list', async (req) => {
     // if (itemsPerPage>100) throw 'quantidade invalida de itens por pagina';
     queryPagesChapter.skip(itemsPerPage * req.params.page || 0);
     queryPagesChapter.limit(itemsPerPage);
+    queryPagesChapter.include('chapterpage');
+    queryPagesChapter.include('page');
     const resultPagesChapter = await queryPagesChapter.find({ useMasterKey: true });
     return resultPagesChapter.map(function (c) {
         c = c.toJSON();
         return {
-            page: c.page,
+            page: {
+                image: c.page.file.url,
+                id: c.page.objectId,
+            },
             id: c.objectId,
             chapter: {
 
@@ -323,6 +356,7 @@ Parse.Cloud.define('get-chapter-list', async (req) => {
     queryChapters.skip(itemsPerPage * req.params.page || 0);
     queryChapters.limit(itemsPerPage);
     queryChapters.include('chapter');
+    queryChapters.include('capechapter');
     // queryChapters.include('chapter,category');
     // queryChapters.include('chapter.user');
     const resultChapters = await queryChapters.find({ useMasterKey: true });
@@ -331,7 +365,10 @@ Parse.Cloud.define('get-chapter-list', async (req) => {
         c = c.toJSON();
         return {
             titlechapter: c.namechapter,
-            cape: c.capechapter,
+            cape: {
+                image: c.capechapter.file.url,
+                id: c.capechapter.objectId,
+            },
             id: c.objectId,
             description: c.description,
             product: {
@@ -437,7 +474,7 @@ Parse.Cloud.define('get-publish-items', async (req) => {
 
     queryProducts.skip(itemsPerPage * req.params.page || 0);
     queryProducts.limit(itemsPerPage);
-
+    queryProducts.include('cape');
     queryProducts.include('category');
 
     const resultProducts = await queryProducts.find({ useMasterKey: true });
@@ -479,26 +516,49 @@ async function useCoin(coin, user) {
 
 function formatProduct(productJson) {
     if (productJson) {
+        // Verifica se há uma capa definida
+        //   if (productJson.cape != null && productJson.cape.url != null) {
         return {
             id: productJson.objectId,
             title: productJson.title,
             description: productJson.description,
-            cape: productJson.cape,
             category: {
                 title: productJson.category && productJson.category.title,
                 id: productJson.category && productJson.category.objectId
             },
             user: {
                 id: productJson.user && productJson.user.objectId,
-                /* personImage: productJson.user.userphoto != null ? productJson.user.userphoto : null,
-                 fullname: productJson.user && productJson.user.fullname,
-                 email: productJson.user && productJson.user.email,
-                 phone: productJson.user && productJson.user.phone,*/
                 // Inclua outras propriedades do usuário conforme necessário
+            },
+            cape: {
+
+                image: productJson.cape && productJson.cape.file.url,
+                id: productJson.cape && productJson.cape.objectId,
             }
+
+            // Inclui a URL da capa
         };
+        /*  } else {
+              // Retorna apenas os outros campos se a capa não estiver definida
+              return {
+                  id: productJson.objectId,
+                  title: productJson.title,
+                  description: productJson.description,
+                  category: {
+                      title: productJson.category && productJson.category.title,
+                      id: productJson.category && productJson.category.objectId
+                  },
+                  user: {
+                      id: productJson.user && productJson.user.objectId,
+                      // Inclua outras propriedades do usuário conforme necessário
+                  },
+                  cape: null // Define a URL da capa como null se não estiver definida
+              };
+          }*/
     } else {
         console.error("Objeto 'productJson' é undefined.");
         return null;  // ou algo apropriado para indicar um resultado inválido
     }
 }
+
+

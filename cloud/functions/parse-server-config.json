@@ -3,8 +3,8 @@
     "cloud": "cloud//main.js",
     "appId": "yourAppId",
     "masterKey": "yourMasterKey",
-    "serverURL": "https://terrier-equipped-supposedly.ngrok-free.app/parse",
-    "publicServerURL": "https://terrier-equipped-supposedly.ngrok-free.app/parse",
+    "serverURL": "http://localhost:1337/parse",
+    "publicServerURL": "http://localhost:1337/parse",
     "appName": "Brasiltoon",
     "emailAdapter": {
         "module": "parse-server-generic-email-adapter",

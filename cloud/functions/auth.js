@@ -1,4 +1,5 @@
 const GalleryPerfil = Parse.Object.extend('GalleryPerfil');
+const FollowEditor = Parse.Object.extend('FollowEditor');
 Parse.Parse.Cloud.define('signup', async (req) => {
     if (!req.params.fullname) throw 'INVALID_FULLNAME';
     if (!req.params.phone) throw 'INVALID_PHONE';
@@ -152,6 +153,95 @@ function formatUser(userJson, usertoken) {
         token: usertoken ? usertoken.sessionToken : null, // Garantir que usertoken é checado antes de acessar sessionToken
     };
 }
+Parse.Cloud.define('follow-editor', async (req) => {
+    if (!req.user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, 'INVALID_USER');
+
+    const userId = req.params.userId;
+    if (!userId) throw new Parse.Error(Parse.Error.INVALID_QUERY, 'INVALID_USER');
+
+    // Verificar se o editor já está sendo seguido
+    const editorFollowedQuery = new Parse.Query(FollowEditor);
+    editorFollowedQuery.equalTo('user', req.user);
+    editorFollowedQuery.equalTo('editor', {
+        __type: 'Pointer',
+        className: '_User',
+        objectId: userId
+    });
+
+    const editorFollowed = await editorFollowedQuery.first({ useMasterKey: true });
+
+    // Se já existe, lançar uma exceção ou retornar uma mensagem
+    if (editorFollowed) {
+        throw new Parse.Error(400, 'EDITOR_ALREADY_FOLLOWED');
+    }
+
+    // Criar uma nova relação de seguir editor
+    const followEditor = new FollowEditor();
+    const editorPointer = {
+        __type: 'Pointer',
+        className: '_User',
+        objectId: userId
+    };
+
+    followEditor.set('editor', editorPointer);
+    followEditor.set('user', req.user);
+
+    const savedEditor = await followEditor.save(null, { useMasterKey: true });
+
+    // Obter o nome do editor seguido
+    const queryUser = new Parse.Query(Parse.User);
+    const editor = await queryUser.get(userId, { useMasterKey: true });
+    const editorName = editor.get('fullname');
+
+    return {
+        id: savedEditor.id,
+        editorName: editorName
+    };
+});
 
 
+//função deixar de seguir editor
+Parse.Cloud.define('unfollow-editor', async (req) => {
+    if (req.params.followeditorId == null) throw 'INVALID-EDITOR';
+    const followEditor = new FollowEditor();
+    followEditor.id = req.params.followeditorId;
 
+    await followEditor.destroy({ useMasterKey: true });
+    return "UNFOLLOW EDITOR"
+});
+
+
+Parse.Cloud.define('checkIfFollowing', async (req) => {
+    const { userId, editor } = req.params;
+
+    if (!userId || !editor) {
+        throw new Error('Missing userId or postId');
+    }
+
+    const follow = Parse.Object.extend('FollowEditor');
+    const query = new Parse.Query(follow);
+
+    query.equalTo('user', { __type: 'Pointer', className: '_User', objectId: userId });
+    query.equalTo('editor', { __type: 'Pointer', className: '_User', objectId: editor });
+
+    const existingFollow = await query.first({ useMasterKey: true });
+
+    return { isFollow: !!existingFollow };
+});
+Parse.Cloud.define('abstractId', async (req) => {
+    const { userId, editor } = req.params;
+
+    if (!userId || !editor) {
+        throw new Error('Missing userId or postId');
+    }
+
+    const follow = Parse.Object.extend('FollowEditor');
+    const query = new Parse.Query(follow);
+
+    query.equalTo('user', { __type: 'Pointer', className: '_User', objectId: userId });
+    query.equalTo('editor', { __type: 'Pointer', className: '_User', objectId: editor });
+
+    const existingFollow = await query.first({ useMasterKey: true });
+
+    return { id: existingFollow.id };
+});
